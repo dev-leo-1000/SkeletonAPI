@@ -1,0 +1,4 @@
+# openssl rand -hex 32로 만든 secret_key
+SECRET_KEY = "b7fa96965d3fbeeeed3f5ac26438d5d8d5bb6e710b1603347e0ca938174ae1ba"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
