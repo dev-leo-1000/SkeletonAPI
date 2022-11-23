@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship, declarative_base
 
-from app.db.database import engine
+from app.db.database import db
 
 Base = declarative_base()
 
@@ -28,4 +28,4 @@ class Item(Base):
     owner = relationship("User", back_populates="items")
 
 
-Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=db.engine)
