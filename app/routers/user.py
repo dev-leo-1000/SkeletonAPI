@@ -40,32 +40,6 @@ async def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(db_sq
     return users
 
 
-@router.get("/{user_id}", response_model=User)
-async def get_user_by_user_id(user_id: int, db: Session = Depends(db_sqlite.session)):
-    db_user = db.query(schemas.User).filter(schemas.User.id == user_id).first()
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return db_user
-
-
-# token 관련
-@router.post("/token", response_model=Token)
-async def login_for_access_token(db: Session = Depends(db_sqlite.session),
-                                 form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
-
-
 def authenticate_user(db: Session, username: str, password: str):
     user = db.query(schemas.User).filter(schemas.User.username == username).first()
     if not user:
@@ -120,7 +94,7 @@ def get_current_user(token: str = Depends(oauth2_scheme),
 
 
 def get_current_active_user(current_user: User = Depends(get_current_user)):
-    if current_user.disabled:
+    if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
@@ -143,3 +117,29 @@ async def get_my_items(current_user: User = Depends(get_current_active_user)):
     :return:
     """
     return current_user.items
+
+
+# token 관련
+@router.post("/token", response_model=Token)
+async def login_for_access_token(db: Session = Depends(db_sqlite.session),
+                                 form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.get("/{user_id}", response_model=User)
+async def get_user_by_user_id(user_id: int, db: Session = Depends(db_sqlite.session)):
+    db_user = db.query(schemas.User).filter(schemas.User.id == user_id).first()
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user

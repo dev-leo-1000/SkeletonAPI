@@ -4,8 +4,6 @@ from sqlalchemy.orm import sessionmaker
 SQLITE_DATABASE_URL = "sqlite:///./sqlite_test.db"
 
 
-# SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
-
 class Database:
     def __new__(cls):
         if not hasattr(cls, "_instance"):
@@ -23,7 +21,7 @@ class Database:
             )
             self._session = sessionmaker(
                 autocommit=False,
-                autoflush=False,
+                autoflush=True,
                 bind=self._engine)
             cls._init = True
 

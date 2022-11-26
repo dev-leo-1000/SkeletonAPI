@@ -1,10 +1,7 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship, declarative_base
 
-from app.db.database import db_sqlite
-
 Base = declarative_base()
-
 
 
 class User(Base):
@@ -17,6 +14,9 @@ class User(Base):
 
     items = relationship("Item", back_populates="owner")
 
+    def __repr__(self):
+        return f"User(id={self.id!r}, username={self.username!r})"
+
 
 class Item(Base):
     __tablename__ = "items"
@@ -26,6 +26,9 @@ class Item(Base):
     owner_id = Column(Integer, ForeignKey("users.id"))
 
     owner = relationship("User", back_populates="items")
+
+    def __repr__(self):
+        return f"Item(id={self.id!r}, title={self.title!r})"
 
 # 테이블 즉시 생성시 사용
 # Base.metadata.create_all(bind=db_sqlite.engine)
