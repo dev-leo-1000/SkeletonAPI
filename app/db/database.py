@@ -2,6 +2,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 SQLITE_DATABASE_URL = "sqlite:///./sqlite_test.db"
+
+
 # SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
 
 class Database:
@@ -41,4 +43,4 @@ class Database:
         return self.get_session
 
 
-db = Database()
+db_sqlite = Database()

@@ -10,8 +10,8 @@ from starlette import status
 from app.common.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.db import schemas
 
-from app.db.database import db
-from app.models import Token, TokenData, User, UserCreate
+from app.db.database import db_sqlite
+from app.models.base_models import Token, TokenData, User, UserCreate, Item
 
 router = APIRouter(prefix="/users")
 
@@ -21,7 +21,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/token")
 
 
 @router.post("/")
-def create_user(user: UserCreate, db: Session = Depends(db.session)):
+async def create_user(user: UserCreate, db: Session = Depends(db_sqlite.session)):
     db_user = db.query(schemas.User).filter(schemas.User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Already registered username")
@@ -35,13 +35,13 @@ def create_user(user: UserCreate, db: Session = Depends(db.session)):
 
 
 @router.get("/", response_model=list[User])
-def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(db.session)):
+async def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(db_sqlite.session)):
     users = db.query(schemas.User).offset(skip).limit(limit).all()
     return users
 
 
 @router.get("/{user_id}", response_model=User)
-def get_user_by_user_id(user_id: int, db: Session = Depends(db.session)):
+async def get_user_by_user_id(user_id: int, db: Session = Depends(db_sqlite.session)):
     db_user = db.query(schemas.User).filter(schemas.User.id == user_id).first()
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -50,7 +50,7 @@ def get_user_by_user_id(user_id: int, db: Session = Depends(db.session)):
 
 # token 관련
 @router.post("/token", response_model=Token)
-async def login_for_access_token(db: Session = Depends(db.session),
+async def login_for_access_token(db: Session = Depends(db_sqlite.session),
                                  form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
@@ -95,8 +95,8 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme),
-                           db: Session = Depends(db.session)):
+def get_current_user(token: str = Depends(oauth2_scheme),
+                     db: Session = Depends(db_sqlite.session)):
 
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -119,17 +119,27 @@ async def get_current_user(token: str = Depends(oauth2_scheme),
     return user
 
 
-async def get_current_active_user(current_user: User = Depends(get_current_user)):
+def get_current_active_user(current_user: User = Depends(get_current_user)):
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
 
 @router.get("/me", response_model=User)
-async def read_users_me(current_user: User = Depends(get_current_active_user)):
+async def get_me(current_user: User = Depends(get_current_active_user)):
     """
     현재 유저
     :param current_user:
     :return:
     """
     return current_user
+
+
+@router.get("/me/items", response_model=list[Item])
+async def get_my_items(current_user: User = Depends(get_current_active_user)):
+    """
+    현재 유저
+    :param current_user:
+    :return:
+    """
+    return current_user.items

@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship, declarative_base
 
-from app.db.database import db
+from app.db.database import db_sqlite
 
 Base = declarative_base()
 
@@ -27,5 +27,7 @@ class Item(Base):
 
     owner = relationship("User", back_populates="items")
 
+# 테이블 즉시 생성시 사용
+# Base.metadata.create_all(bind=db_sqlite.engine)
 
-Base.metadata.create_all(bind=db.engine)
+# TODO: 테이블 변경시 사용하는 코드도 추가하기
