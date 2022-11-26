@@ -30,7 +30,6 @@ async def create_user(user: UserCreate, db: Session = Depends(db_sqlite.session)
     new_user = schemas.User(username=user.username, hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
-    # db.refresh(new_user)
     return
 
 
